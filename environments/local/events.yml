@@ -1,0 +1,8 @@
+events:
+  - schedule:
+      name: close-evg-incidents-stage-local
+      description: 'closes incidents in local sandbox'
+      rate: rate(24 hours)
+      enabled: false
+      input:
+        org_id: 454514914099327

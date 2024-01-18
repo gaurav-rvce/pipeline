@@ -1,0 +1,8 @@
+events:
+  - schedule:
+      name: close-evg-incidents-stage-stage
+      description: 'closes incidents in stage'
+      rate: rate(24 hours)
+      enabled: false
+      input:
+        org_id: 454514914099327

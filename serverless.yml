@@ -1,0 +1,53 @@
+service: evbg-operation
+
+plugins:
+  - serverless-latest-layer-version
+
+custom:
+  defaultStage: local
+  region: ${opt:region, self:provider.region}
+  stage: ${opt:stage, self:custom.defaultStage}
+  prefix: ${self:custom.stage}-${self:service}
+
+package:
+  individually: True
+  patterns:
+    - '!**/*'
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'stage'}
+  runtime: python3.8
+  region: us-east-1
+  deploymentBucket: evbg-ps-us-east-1-serverless-deployments
+  tags:
+    EVBG_CLIENT: close-evbg-incidents
+  environment:
+    PYTHONPATH: /var/runtime:/opt/python:/opt/python/lib/python3.8/site-packages
+    
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - ssm:GetParameter
+          Resource:
+            - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/close-evbg-incidents/*
+        
+  
+  vpc: ${file(environments/${self:provider.stage}/vpc.yml):vpc}
+
+functions:
+  close-evbg-incidents:
+    description: "Fetches the open incidents and closes them without notification"
+    handler: EVBGOperation/handler.handle_request
+    timeout: 900
+    memorySize: 256
+    layers:
+      - arn:aws:lambda:${self:custom.region}:161313707195:layer:evbg_ps_general_utils:latest
+    package:
+      patterns:
+        - EVBGOperation/*
+    events: ${file(environments/${self:provider.stage}/events.yml):events}  
+
+
